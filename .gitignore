@@ -28,3 +28,10 @@ logs/
 # Environment
 .env
 *.env.local
+
+# Terraform (sensitive files, providers, state)
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
