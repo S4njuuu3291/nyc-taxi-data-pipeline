@@ -1,0 +1,82 @@
+x-airflow-common: &airflow-common
+  image: apache/airflow:3.2.1
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+    # Aktifkan FAB Auth Manager (wajib untuk airflow users create di Airflow 3.x)
+    AIRFLOW__CORE__AUTH_MANAGER: "airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager"
+    AIRFLOW__FAB__EXTERNAL_DB_MANAGERS: "airflow.providers.fab.auth_manager.models.db.FABDBManager"
+    # Auto-create admin user (khusus init)
+    _AIRFLOW_DB_MIGRATE: "true"
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./plugins:/opt/airflow/plugins
+    - ./scripts:/opt/airflow/scripts
+  user: "${AIRFLOW_UID:-50000}:0"
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 5s
+      retries: 5
+
+  init:
+    <<: *airflow-common
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: python /opt/airflow/scripts/init_airflow.py
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+      AIRFLOW__CORE__AUTH_MANAGER: "airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager"
+      AIRFLOW__FAB__EXTERNAL_DB_MANAGERS: "airflow.providers.fab.auth_manager.models.db.FABDBManager"
+      _AIRFLOW_DB_MIGRATE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_USERNAME: "admin"
+      _AIRFLOW_WWW_USER_PASSWORD: "admin"
+      _AIRFLOW_WWW_USER_EMAIL: "admin@example.com"
+    restart: on-failure
+
+  webserver:
+    <<: *airflow-common
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
+    command: airflow api-server
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/api/v1/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  scheduler:
+    <<: *airflow-common
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    command: airflow scheduler
+    healthcheck:
+      test: ["CMD-SHELL", "airflow jobs check --job-type SchedulerJob --hostname \"$(hostname)\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
