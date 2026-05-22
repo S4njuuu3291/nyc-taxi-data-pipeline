@@ -1,0 +1,118 @@
+# NYC Taxi Trip Data — Cleaning Rules
+# Derived from EDA anomaly detection notebook
+# Dataset: Yellow & Green Taxi Trip Records (TLC)
+
+nyc_taxi_cleaning_rules:
+  yellow_trip:
+
+    # ==========================================================================
+    # 1. INFORMASI IDENTITAS & PENYEDIA
+    # ==========================================================================
+    VendorID:
+      - valid_values: [1, 2, 6, 7]
+        description: "1=Creative Mobile, 2=Curb Mobility, 6=Myle Technologies, 7=Helix"
+
+    store_and_fwd_flag:
+      - valid_values: ["Y", "N"]
+        description: "Y=store & forward, N=langsung terkirim"
+
+    # ==========================================================================
+    # 2. WAKTU PERJALANAN (TIMESTAMP)
+    # ==========================================================================
+    tpep_pickup_datetime:
+      - filter: "not null"
+      - filter: "< tpep_dropoff_datetime"
+        description: "pickup harus sebelum dropoff"
+
+    tpep_dropoff_datetime:
+      - filter: "not null"
+      - description: "duration dalam hours harus >= 0 dan <= 24"
+      - computed_duration:
+          expression: "(tpep_dropoff_datetime - tpep_pickup_datetime) / 3600s"
+          rules:
+            - filter: ">= 0"
+            - filter: "<= 24"
+
+    # ==========================================================================
+    # 3. DETAIL PERJALANAN
+    # ==========================================================================
+    trip_distance:
+      - filter: ">= 0"
+      - filter: "< 300"
+        description: "remove extreme outliers"
+
+    passenger_count:
+      - filter: ">= 0"
+      - filter: "<= 6"
+
+    RatecodeID:
+      - valid_values: [1, 2, 3, 4, 5, 6, 99]
+        description: "1=Standard, 2=JFK, 3=Newark, 4=Nassau/Westchester, 5=Negotiated, 6=Group, 99=Unknown"
+
+    # ==========================================================================
+    # 4. LOKASI WILAYAH (ZONA TLC)
+    # ==========================================================================
+    PULocationID:
+      - filter: "> 0"
+      - filter: "<= 265"
+        description: "valid TLC zone range 1-265"
+
+    DOLocationID:
+      - filter: "> 0"
+      - filter: "<= 265"
+        description: "valid TLC zone range 1-265"
+
+    # ==========================================================================
+    # 5. METODE PEMBAYARAN & RINCIAN BIAYA
+    # ==========================================================================
+    payment_type:
+      - valid_values: [1, 2, 3, 4, 5, 6]
+        description: "1=Credit, 2=Cash, 3=No charge, 4=Dispute, 5=Unknown, 6=Voided"
+
+    fare_amount:
+      - filter: "> 0"
+      - filter: "< 500"
+        description: "remove extreme outliers"
+
+    extra:
+      - filter: ">= 0"
+      - filter: "<= 10"
+        description: "surcharge rush hour $0.50/$1.00 max $10"
+
+    mta_tax:
+      - filter: ">= 0"
+      - valid_values: [0, 0.5]
+        description: "MTA tax $0.50 atau $0 untuk non-rated trips"
+
+    tip_amount:
+      - filter: ">= 0"
+      - conditional_rule:
+          condition: "payment_type == 2"
+          expected_zero: true
+          description: "tip tunai tidak tercatat di sistem (harus 0 jika Cash)"
+
+    tolls_amount:
+      - filter: ">= 0"
+      - filter: "<= 100"
+        description: "reasonable toll max"
+
+    improvement_surcharge:
+      - valid_values: [0, 0.3, 1.0]
+        description: "improvement surcharge $0.30 (sejak 2015), dinaikkan jadi $1.00 (TLC terbaru)"
+
+    congestion_surcharge:
+      - filter: ">= 0"
+      - filter: "<= 5"
+        description: "NYS congestion surcharge: $2.50 Yellow, $1.25 Green, atau $0"
+
+    airport_fee:
+      - filter: ">= 0"
+      - filter: "<= 5.00"
+        description: "$1.25 LaGuardia, $2.50 JFK, atau $0 non-airport (toleransi longgar untuk penyesuaian tarif)"
+
+    total_amount:
+      - integrity_check:
+          expression: "fare_amount + extra + mta_tax + tip_amount + tolls_amount + improvement_surcharge + congestion_surcharge + airport_fee + cbd_congestion_fee"
+          tolerance: 0.01
+          optional_columns: ["cbd_congestion_fee"]
+          description: "total_amount harus sama dengan jumlah seluruh komponen biaya (termasuk cbd_congestion_fee jika ada)"

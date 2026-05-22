@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data (large parquet/delta files, not for git)
+data/bronze/
+data/silver/
+data/gold/
+data/broken/
+data/source/
+data/yellow_tripdata_2025-03.parquet
+data/yellow_tripdata_2025-03_sample/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+logs/
+
+# Environment
+.env
+*.env.local
