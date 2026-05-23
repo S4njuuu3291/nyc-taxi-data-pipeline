@@ -1,5 +1,5 @@
 locals {
-  resource_prefix = "${var.project_name}-${var.environment}"
+  resource_prefix = "${var.project_name}_${var.environment}"
 }
 
 module "base" {

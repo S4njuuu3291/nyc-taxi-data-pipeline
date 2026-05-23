@@ -18,5 +18,5 @@ variable "environment" {
 variable "project_name" {
     type = string
     description = "Nama project yang akan digunakan"
-    default = "terraform-production-grade"
+    default = "terraform_production_grade"
 }

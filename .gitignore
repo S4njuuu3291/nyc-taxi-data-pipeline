@@ -5,18 +5,26 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+*.egg
 
 # Jupyter
 .ipynb_checkpoints/
 
-# Data (large parquet/delta files, not for git)
-data/bronze/
-data/silver/
-data/gold/
-data/broken/
-data/source/
-data/yellow_tripdata_2025-03.parquet
-data/yellow_tripdata_2025-03_sample/
+# Spark / Metastore
+metastore_db/
+spark-warehouse/
+derby.log
+
+# Data — ignore generated content but keep folder structure
+data/bronze/*
+!data/bronze/.gitkeep
+data/silver/*
+!data/silver/.gitkeep
+data/gold/*
+!data/gold/.gitkeep
+data/broken/*
+!data/broken/.gitkeep
+data/source/yellow_tripdata_2025-03.parquet
 
 # IDE
 .vscode/
@@ -35,3 +43,27 @@ logs/
 *.tfstate.*
 *.tfvars
 !*.tfvars.example
+
+# Airflow
+airflow.cfg
+airflow.db
+unittests.cfg
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Docker
+.docker/
+
+# Notebooks (checkpoints)
+notebooks/.ipynb_checkpoints/
+
+# Delta log (generated)
+**/_delta_log/
+
+# macOS
+.DS_Store

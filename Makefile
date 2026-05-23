@@ -1,4 +1,4 @@
-.PHONY: docker-up docker-down docker-build docker-restart terraform-init-dev terraform-plan-dev terraform-apply-dev terraform-destroy-dev terraform-init-prod terraform-plan-prod terraform-apply-prod terraform-destroy-prod
+.PHONY: docker-up docker-down docker-build docker-restart terraform-init-dev terraform-plan-dev terraform-apply-dev terraform-destroy-dev terraform-init-prod terraform-plan-prod terraform-apply-prod terraform-destroy-prod upload-glue-scripts
 
 docker-up:
 	docker compose -f docker-compose.dev.yaml up -d
@@ -35,3 +35,6 @@ terraform-apply-prod:
 
 terraform-destroy-prod:
 	terraform -chdir=terraform/environment/prod destroy -auto-approve
+
+upload-glue-scripts:
+	python3 scripts/upload_glue_scripts.py
