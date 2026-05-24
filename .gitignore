@@ -1,0 +1,74 @@
+# gitignore tuned to ignore files but keep directory structure
+# Principle: ignore files inside directories, but do NOT ignore the directories themselves.
+
+# --------------------
+# Sensitive / env
+# --------------------
+*.tfvars
+*.tfstate
+*.tfstate.*
+.env
+.env.*
+credentials
+secrets.*
+*.pem
+*.key
+
+# Terraform local runtime files — ignore contents but keep folder entries
+.terraform/
+.terraform.lock.hcl
+
+# --------------------
+# Data directories (ignore files, keep dirs)
+# --------------------
+# Ignore all files under data/, but allow directories and any .gitkeep markers
+data/**/*
+!data/**/
+!data/**/.gitkeep
+
+# More-specific: source files/parquet under data/source
+data/source/**/*.parquet
+data/source/**/*.snappy
+
+# --------------------
+# Scripts outputs (generated files only)
+# --------------------
+# Keep scripts/ folder tracked, but ignore generated outputs
+scripts/**/*.parquet
+scripts/**/*.csv
+scripts/**/*.snappy
+scripts/**/*.log
+scripts/**/*.out
+scripts/**/output-*
+
+# --------------------
+# Common editor / OS files
+# --------------------
+.DS_Store
+Thumbs.db
+__pycache__/
+*.py[cod]
+*.swp
+
+# VSCode workspace storage (keep the settings file if intentionally added)
+.vscode/**
+!.vscode/**/
+!.vscode/settings.json
+
+# Jupyter checkpoints (ignore outputs)
+.ipynb_checkpoints/
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# Sample/test data files (CSV)
+*.csv
+taxi_test_*.csv
+
+# End of file
+
